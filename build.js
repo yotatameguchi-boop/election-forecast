@@ -1,5 +1,5 @@
 /* build.js — engine.js を template.html のプレースホルダへ差し込んで
-   単一ファイルの politisaber.html を生成する。
+   単一ファイルの index.html を生成する。
    エンジンの実体は engine.js ひとつだけ（HTML と各スクリプトが共有）。
 
      node build.js      … 1回だけビルド
@@ -11,7 +11,7 @@ const path = require('path');
 const DIR      = __dirname;
 const ENGINE   = path.join(DIR, 'engine.js');
 const TEMPLATE = path.join(DIR, 'template.html');
-const OUTPUT   = path.join(DIR, 'politisaber.html');
+const OUTPUT   = path.join(DIR, 'index.html');
 
 const PLACEHOLDER = '/*__ENGINE__*/';
 const MARKERS = /\/\* ===== ENGINE:BEGIN[\s\S]*?\/\* ===== ENGINE:END[^\n]*\n/;
@@ -49,7 +49,7 @@ function build(){
 if (require.main === module){
   try {
     const r = build();
-    console.log(`built politisaber.html  (engine ${r.engineLines} 行 / 合計 ${r.totalLines} 行 / ${(r.bytes/1024).toFixed(1)} KB)`);
+    console.log(`built index.html  (engine ${r.engineLines} 行 / 合計 ${r.totalLines} 行 / ${(r.bytes/1024).toFixed(1)} KB)`);
   } catch (e){
     console.error('ビルド失敗: ' + e.message);
     process.exit(1);

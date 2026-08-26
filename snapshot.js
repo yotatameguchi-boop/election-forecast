@@ -15,7 +15,7 @@ const fs   = require('fs');
 const path = require('path');
 
 const DIR   = __dirname;
-const BUILT = path.join(DIR, 'politisaber.html');
+const BUILT = path.join(DIR, 'index.html');
 const OUT   = path.join(DIR, 'forecasts');
 const SCHEMA_VERSION = 1;
 
@@ -26,7 +26,7 @@ function loadModel(){
   const html = fs.readFileSync(BUILT, 'utf8');
   const script = html.split('<script>')[1].split('</scr' + 'ipt>')[0];
   const cut = script.indexOf('/* ---------- ボード ---------- */');
-  if (cut < 0) throw new Error('politisaber.html の構造が想定と違います（先に node build.js）');
+  if (cut < 0) throw new Error('index.html の構造が想定と違います（先に node build.js）');
   return new Function(script.slice(0, cut) +
     '\nreturn {RACES, HISTORY, PARAMS, FORECASTS, LAST_UPDATED};')();
 }

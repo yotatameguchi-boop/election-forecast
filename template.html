@@ -807,14 +807,21 @@ const LIVE = {
 
 async function fetchLive(raceId){
   if (LIVE.base === null) return null;            // file:// や artifact では試さない
-  try {
-    const res = await fetch(`${LIVE.base}/api/races/${encodeURIComponent(raceId)}/estimate`, {
-      signal: AbortSignal.timeout(LIVE.timeoutMs), cache:'no-store',
-    });
-    if (!res.ok) return null;
-    const j = await res.json();
-    return (j && j.candidates) ? j : null;        // waiting 状態は静的表示のまま
-  } catch { return null; }                        // サーバ不在は通常。黙って諦める
+  const id = encodeURIComponent(raceId);
+  /* 2通りの配置に対応する。パスは相対にしてある（GitHub Pages では
+     サイトがサブディレクトリ配下に載るため、絶対パスだと外れる）。
+       1. server/api.js が居る    → api/races/:id/estimate（都度計算・常に最新）
+       2. GitHub Pages などの静的配信 → live/:id.json
+          （開票当日に GitHub Actions が書き出した推定のスナップショット）  */
+  for (const url of [`api/races/${id}/estimate`, `live/${id}.json`]){
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(LIVE.timeoutMs), cache:'no-store' });
+      if (!res.ok) continue;
+      const j = await res.json();
+      if (j && j.candidates) return j;            // waiting 状態は静的表示のまま
+    } catch { /* この経路は無い。次を試す */ }
+  }
+  return null;
 }
 
 function renderLiveBoard(race, live){

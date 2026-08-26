@@ -15,11 +15,11 @@ const path = require('path');
      backtest だけ古いままになる事故が実際に起きた。
      ビルド済み HTML から読むことで、ページと成績が必ず一致する。     */
 function loadHistory(){
-  const built = path.join(__dirname, 'politisaber.html');
-  if (!fs.existsSync(built)) throw new Error('politisaber.html がありません。先に node build.js');
+  const built = path.join(__dirname, 'index.html');
+  if (!fs.existsSync(built)) throw new Error('index.html がありません。先に node build.js');
   const script = fs.readFileSync(built, 'utf8').split('<script>')[1].split('</scr' + 'ipt>')[0];
   const cut = script.indexOf('/* ---------- ボード ---------- */');
-  if (cut < 0) throw new Error('politisaber.html の構造が想定と違います');
+  if (cut < 0) throw new Error('index.html の構造が想定と違います');
   return new Function(script.slice(0, cut) + '\nreturn {HISTORY, RACES};')();
 }
 

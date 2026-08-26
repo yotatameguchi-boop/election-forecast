@@ -5,6 +5,7 @@
      node server/cli.js replay <raceId>              開票の進行に沿った推移
      node server/cli.js races                        レース一覧
      node server/cli.js init <raceId>                レース定義の雛形を作る
+     node server/cli.js live <raceId>                静的配信用のJSONを書き出す
 
    開票当日はこれを繰り返すだけ:
      途中経過を CSV に書く → ingest → estimate                     */
@@ -67,6 +68,20 @@ function showReplay(raceId){
   console.log('');
 }
 
+/* 静的配信（GitHub Pages 等）向けに推定を live/<raceId>.json へ書き出す。
+   API と同じ形なので、ページ側は同じコードで読める。            */
+function writeLive(raceId){
+  const e = pipeline.estimate(raceId, { particles: 20000 });
+  const dir = path.join(__dirname, '..', 'live');
+  fs.mkdirSync(dir, { recursive: true });
+  const f = path.join(dir, `${raceId}.json`);
+  fs.writeFileSync(f, JSON.stringify(e, null, 1));
+  console.log(`\n  ${path.relative(path.join(__dirname,'..'), f)} を書き出しました`);
+  if (e.status === 'waiting') console.log('  （まだ開票済みの自治体がないため候補者データは空です）');
+  else console.log(`  開票率 ${e.countedPct.toFixed(1)}%  首位 ${e.leader}（勝率 ${e.leaderProb.toFixed(1)}%）${e.called ? ' — 当確' : ''}`);
+  console.log('');
+}
+
 function init(raceId){
   fs.mkdirSync(pipeline.RACES_DIR, { recursive:true });
   const f = path.join(pipeline.RACES_DIR, `${raceId}.json`);
@@ -98,6 +113,8 @@ const [cmd, a, b] = process.argv.slice(2);
                          console.log(ids.length ? '\n  ' + ids.join('\n  ') + '\n' : '\n  レース定義がありません（cli.js init <raceId>）\n'); break; }
       case 'init':     if (!a) throw new Error('使い方: init <raceId>');
                        init(a); break;
+      case 'live':     if (!a) throw new Error('使い方: live <raceId>');
+                       writeLive(a); break;
       default:
         console.log(`\n使い方:
   node server/cli.js races
@@ -105,6 +122,7 @@ const [cmd, a, b] = process.argv.slice(2);
   node server/cli.js ingest   <raceId> <file.csv>
   node server/cli.js estimate <raceId> [asOf]
   node server/cli.js replay   <raceId>
+  node server/cli.js live     <raceId>    静的配信用に live/<raceId>.json を書き出す
 `);
     }
   } catch (e){

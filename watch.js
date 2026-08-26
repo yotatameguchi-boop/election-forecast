@@ -1,4 +1,4 @@
-/* watch.js — engine.js / template.html を保存したら politisaber.html を自動再生成。
+/* watch.js — engine.js / template.html を保存したら index.html を自動再生成。
    依存パッケージなし。Ctrl+C で終了。
 
      node watch.js
@@ -37,7 +37,7 @@ function rebuild(reason){
   lastSig = sig;
   try {
     const r = build();
-    ok(`${reason} → politisaber.html を再生成 (${r.totalLines} 行 / ${(r.bytes/1024).toFixed(1)} KB)`);
+    ok(`${reason} → index.html を再生成 (${r.totalLines} 行 / ${(r.bytes/1024).toFixed(1)} KB)`);
   } catch (e){
     ng(`${reason} → ビルド失敗`);
     console.log(`   \x1b[31m${e.message}\x1b[0m`);

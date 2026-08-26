@@ -12,7 +12,7 @@
 
 1. **予測エンジン** — 得票率・投票総数・未モデル化候補を分けて確率的に予測する
 2. **計測系** — 交差検証・スコアリング・較正。モデルが「本当はどれくらい当たるのか」を自己採点でなく外から測る
-3. **表示** — 単一ファイルの HTML（`politisaber.html`）。ダブルクリックで開く
+3. **表示** — 単一ファイルの HTML（`index.html`）。ダブルクリックで開く
 
 ## ファイル構成
 
@@ -21,9 +21,9 @@
 | `engine.js` | 予測エンジン本体。**唯一の実体**で、HTML と各スクリプトが共有する |
 | `livecount.js` | 開票速報モデル（開票途中から最終結果を推定） |
 | `template.html` | ページのひな形。データ（`RACES`）もここ |
-| `build.js` | `engine.js` を `template.html` に差し込んで `politisaber.html` を生成 |
+| `build.js` | `engine.js` を `template.html` に差し込んで `index.html` を生成 |
 | `watch.js` | 保存を監視して自動ビルド |
-| `backtest.js` | 係数推定・成績計測・交差検証（データは `politisaber.html` から読む） |
+| `backtest.js` | 係数推定・成績計測・交差検証（データは `index.html` から読む） |
 | `snapshot.js` | 予測を投開票前に凍結して `forecasts/` に保存 |
 | `simcheck.js` | 開票速報モデルの検証（合成データ） |
 | `server/store.js` | 開票途中経過の追記専用ストア（JSONL） |
@@ -37,7 +37,7 @@
 ## 使い方
 
 ```bash
-node build.js      # politisaber.html を生成
+node build.js      # index.html を生成
 node watch.js      # 保存を監視して自動ビルド
 node backtest.js   # 係数推定と成績計測
 node simcheck.js   # 開票速報モデルの検証
@@ -147,7 +147,7 @@ node server/cli.js ingest okinawa2026 sokuho.pdf  # 選管PDFを直接取り込�
 node server/test.js                            # 25件のテスト
 ```
 
-`server/api.js` は API と一緒に `politisaber.html` も同一オリジンで配信します。
+`server/api.js` は API と一緒に `index.html` も同一オリジンで配信します。
 ブラウザで `http://localhost:8787` を開くと、ページが自分で `/api/.../estimate` を叩き、
 **開票速報の表示に切り替わります**（30秒ごとに更新）。
 

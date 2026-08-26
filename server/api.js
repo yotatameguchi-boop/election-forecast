@@ -10,7 +10,7 @@
      GET  /api/races/:id/observations    生の観測ログ
      GET  /api/races/:id/replay          開票の進行に沿った推定の推移
      POST /api/races/:id/observations    観測の追加（追記のみ・上書き不可）
-     GET  /                              静的配信（politisaber.html）
+     GET  /                              静的配信（index.html）
 
    ★推定は毎回その場で計算する。キャッシュしていないのは、
      途中経過が数分おきに変わる前提で、古い数字を返す方が害が大きいため。
@@ -52,10 +52,10 @@ const MIME = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; chars
                '.json':'application/json; charset=utf-8', '.css':'text/css; charset=utf-8' };
 
 function serveStatic(res, urlPath){
-  const rel = urlPath === '/' ? 'politisaber.html' : urlPath.replace(/^\/+/, '');
+  const rel = urlPath === '/' ? 'index.html' : urlPath.replace(/^\/+/, '');
   const file = path.join(ROOT, rel);
   // ルート外へ出る経路を塞ぐ
-  if (!file.startsWith(ROOT + path.sep) && file !== path.join(ROOT, 'politisaber.html')){
+  if (!file.startsWith(ROOT + path.sep) && file !== path.join(ROOT, 'index.html')){
     return fail(res, 403, '禁止されたパスです');
   }
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) return fail(res, 404, '見つかりません');
@@ -133,7 +133,7 @@ if (require.main === module){
     console.log(`  GET  /api/races`);
     console.log(`  GET  /api/races/:id/estimate`);
     console.log(`  POST /api/races/:id/observations`);
-    console.log(`  GET  /  （politisaber.html を配信）\n`);
+    console.log(`  GET  /  （index.html を配信）\n`);
     const ids = pipeline.listRaces();
     console.log(ids.length ? `  レース定義: ${ids.join(', ')}` : '  ⚠ data/races/ にレース定義がありません');
     console.log('');

@@ -1,0 +1,13 @@
+{
+ "raceId": "okinawa2026",
+ "name": "沖縄県知事選",
+ "asOf": "2026-08-25T05:11:47.365Z",
+ "municipalities": {
+  "reported": 0,
+  "total": 41
+ },
+ "unknownMunicipalities": [],
+ "status": "waiting",
+ "message": "まだ開票済みの自治体がありません",
+ "candidates": null
+}
