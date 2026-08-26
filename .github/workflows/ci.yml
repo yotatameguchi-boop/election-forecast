@@ -1,0 +1,50 @@
+# push / PR ごとにテストと再現性を確認する。
+#
+# index.html は生成物なので、コミットされた内容が
+# template.html + engine.js から再生成したものと一致するかも確かめる。
+# ここがずれると、Pages で配信されるページとリポジトリの中身が食い違う。
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: バックエンドのテスト
+        run: node server/test.js
+
+      - name: 成績計測が通ること
+        run: node backtest.js > /dev/null
+
+      - name: index.html が再生成物と一致すること
+        run: |
+          set -euo pipefail
+          cp index.html /tmp/committed.html
+          node build.js
+          if ! diff -q /tmp/committed.html index.html > /dev/null; then
+            echo "::error::index.html がコミットされた内容と一致しません。node build.js を実行してコミットし直してください。"
+            diff /tmp/committed.html index.html | head -40
+            exit 1
+          fi
+          echo "一致しました"
+
+      - name: 選管PDFパーサが公表値を再現すること
+        run: |
+          python3 tools/parse_senkan_pdf.py tools/fixtures/okinawa2022-kaihyo-kakutei.pdf \
+            --candidates 下地ミキオ 佐喜真淳 玉城デニー \
+            --expect 53677 274844 339767 --max-seq 41 > /dev/null

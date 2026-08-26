@@ -1,0 +1,105 @@
+# 開票当日、選管の速報PDFを取り込んで推定を更新し、Pages へ反映する。
+#
+# 常時稼働のサーバを持たずに開票速報を出すための仕組み。
+# 取り込んだ観測が git 履歴に残るので、あとから「何時の時点で何が
+# 分かっていたか」を完全に再現できる（store.js の追記専用と同じ狙い）。
+#
+# ★動かす前に data/races/<raceId>.json の pdf.url と pdf.columns を
+#   実際の速報PDFに合わせること。列の並びは届出順で変わる。
+name: election-night
+
+on:
+  workflow_dispatch:
+    inputs:
+      race:
+        description: レースID（例 okinawa2026）
+        required: true
+        default: okinawa2026
+      pdf_url:
+        description: 選管の速報PDFのURL（省略時はレース定義の pdf.url）
+        required: false
+  schedule:
+    # 2026-09-13 の 11:00–16:59 UTC ＝ 20:00–翌01:59 JST に5分おき。
+    # GitHub の cron は日と月を指定できるので、開票当日だけに絞れる。
+    - cron: '*/5 11-16 13 9 *'
+
+permissions:
+  contents: write
+
+concurrency:
+  # 前の実行と重ならないようにする。取り込みは追記なので重複しても
+  # 壊れないが、push が競合して無駄に失敗するのを避ける。
+  group: election-night
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: レースIDを決める
+        id: cfg
+        run: echo "race=${{ github.event.inputs.race || 'okinawa2026' }}" >> "$GITHUB_OUTPUT"
+
+      - name: 速報PDFを取り込む
+        id: ingest
+        env:
+          RACE: ${{ steps.cfg.outputs.race }}
+          PDF_URL: ${{ github.event.inputs.pdf_url }}
+        run: |
+          set -euo pipefail
+          URL="${PDF_URL:-$(node -e "
+            const r=require('./data/races/${RACE}.json');
+            if(!r.pdf||!r.pdf.url){console.error('pdf.url が未設定');process.exit(1);}
+            console.log(r.pdf.url);
+          ")}"
+          echo "取得元: $URL"
+          curl -fsSL --retry 3 --retry-delay 5 -A 'politisaber/1.0 (personal research)' \
+               -o /tmp/sokuho.pdf "$URL"
+          ls -la /tmp/sokuho.pdf
+          node server/cli.js ingest "$RACE" /tmp/sokuho.pdf
+
+      - name: 推定を更新して静的JSONを書き出す
+        env:
+          RACE: ${{ steps.cfg.outputs.race }}
+        run: |
+          set -euo pipefail
+          node server/cli.js estimate "$RACE"
+          node server/cli.js live "$RACE"
+          node build.js
+
+      - name: 変更があればコミットする
+        env:
+          RACE: ${{ steps.cfg.outputs.race }}
+        run: |
+          set -euo pipefail
+          git config user.name  'politisaber-bot'
+          git config user.email 'actions@github.com'
+          git add data/ live/ index.html
+          if git diff --cached --quiet; then
+            echo "変更なし。何もしません。"
+            exit 0
+          fi
+          COUNTED=$(node -e "
+            try{const j=require('./live/${RACE}.json');
+                console.log(j.countedPct?j.countedPct.toFixed(1)+'%':'開票前');}
+            catch{console.log('不明');}
+          ")
+          git commit -m "開票速報 ${RACE}: 開票率 ${COUNTED}"
+          # 他の実行と競合したら取り込み直して再試行する
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && \
+            git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            echo "push 競合。再試行 $i"
+            sleep $((i * 5))
+          done
+          exit 1
