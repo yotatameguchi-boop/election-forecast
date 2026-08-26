@@ -63,7 +63,12 @@ jobs:
             exit 0
           fi
           # 選管の特設ページから探す。未公開なら終了コード3。
-          OUT=$(node server/find-pdf.js "$RACE" --json); RC=$?
+          # ★GitHub Actions は bash -e で起動するので、明示的に外さないと
+          #   非0終了で即死して RC を拾えない（実際にこれで失敗した）。
+          set +e
+          OUT=$(node server/find-pdf.js "$RACE" --json)
+          RC=$?
+          set -e
           echo "$OUT"
           if [ $RC -eq 3 ]; then
             echo "速報PDFはまだ公開されていません。今回は何もしません。"
