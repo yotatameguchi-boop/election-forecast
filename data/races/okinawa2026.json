@@ -721,6 +721,15 @@
    "玉城デニー"
   ],
   "_note": "選管PDFの列の並び。2022年確定版は 下地ミキオ/佐喜真淳/玉城デニー の順だった。2026年の実際のPDFが出たら届出順に合わせて必ず直すこと。",
-  "maxSeq": 41
+  "maxSeq": 41,
+  "indexUrl": "https://www.pref.okinawa.lg.jp/kensei/senkyo/1005009/1023802/1040303/index.html",
+  "match": "kaihyo",
+  "prefer": [
+   "kakutei",
+   "saishu",
+   "chukan",
+   ""
+  ],
+  "_discovery": "速報PDFのURLは投開票日まで存在せず、パス中の連番はCMSが振るため予測できない。indexUrl（県選管の特設ページ）から kaihyo を含むPDFを探す。2026年のアセットは 001/040/303/ 配下、命名は r8chiji- 始まり。"
  }
 }
