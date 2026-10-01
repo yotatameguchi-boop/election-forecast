@@ -46,6 +46,16 @@ function rank(url, prefer){
   return prefer.length;
 }
 
+/* 中間速報はファイル名に時刻が入る（chijisenkaihyo2130.pdf … 2500.pdf）。
+   確定版には入らない。同順位なら「時刻なし（＝確定）」→「遅い時刻」の順にする。
+   ★2026年の実運用では、時刻付きの訂正版 2300teisei と確定の訂正版 _teisei が
+     どちらも "teisei" を含み、名前の照合だけでは中間速報を掴んだ。      */
+function reportTime(url){
+  const name = decodeURIComponent(url.split('/').pop() || '');
+  const m = name.match(/kaihyou?(\d{4})/i);
+  return m ? Number(m[1]) : Infinity;     // 時刻なし＝確定版＝最も新しい扱い
+}
+
 async function findPdf(raceId, opts = {}){
   const race = pipeline.loadRace(raceId);
   const cfg  = race.pdf ?? {};
@@ -80,7 +90,7 @@ async function findPdf(raceId, opts = {}){
   }
 
   const prefer = opts.prefer ?? cfg.prefer ?? DEFAULT_PREFER;
-  hits.sort((a,b) => rank(a,prefer) - rank(b,prefer));
+  hits.sort((a,b) => (rank(a,prefer) - rank(b,prefer)) || (reportTime(b) - reportTime(a)));
   return { url: hits[0], source: 'discovered', all: hits, scanned: all.length };
 }
 
@@ -113,4 +123,4 @@ if (require.main === module){
     });
 }
 
-module.exports = { findPdf, extractPdfLinks, rank };
+module.exports = { findPdf, extractPdfLinks, rank, reportTime };

@@ -723,13 +723,22 @@
   "_note": "選管PDFの列の並び。2022年確定版は 下地ミキオ/佐喜真淳/玉城デニー の順だった。2026年の実際のPDFが出たら届出順に合わせて必ず直すこと。",
   "maxSeq": 41,
   "indexUrl": "https://www.pref.okinawa.lg.jp/kensei/senkyo/1005009/1023802/1040303/index.html",
-  "match": "kaihyo",
+  "match": "chiji.*kaihyou?(\\d{4}|_)",
   "prefer": [
-   "kakutei",
-   "saishu",
-   "chukan",
+   "kaihyou?_teisei",
+   "kaihyou?_(saishu|kakutei)",
    ""
   ],
-  "_discovery": "速報PDFのURLは投開票日まで存在せず、パス中の連番はCMSが振るため予測できない。indexUrl（県選管の特設ページ）から kaihyo を含むPDFを探す。2026年のアセットは 001/040/303/ 配下、命名は r8chiji- 始まり。"
- }
+  "_discovery": "速報PDFのURLは投開票日まで存在せず、パス中の連番はCMSが振るため予測できない。indexUrl（県選管の特設ページ）から kaihyo を含むPDFを探す。2026年のアセットは 001/040/303/ 配下、命名は r8chiji- 始まり。",
+  "_discoveryNote": "2026年9月13日の実運用で判明: (1) 県議補選のPDF kengihosenkaihyosaishu.pdf も \"kaihyo\" を含み、saishu 優先だったため別レースを掴んだ → match に chiji を必須化。(2) 確定版は後日 chijisenkaihyou_teisei.pdf（9/16訂正）に差し替わり、当初の _saishu は404になった → teisei を最優先。",
+  "columns2026": [
+   "古謝玄太",
+   "カネシマシュン",
+   "すえよしまさひろ",
+   "玉城デニー",
+   "ヒガタカシ",
+   "屋良朝助"
+  ]
+ },
+ "_postmortem": "2026-09-13 開票当夜の自動取り込みは失敗した。原因は2層あった。(1) 速報PDFの書式が2022年版から変わっていた（Tj→TJ配列、得票数が16進CIDからリテラル文字列へ、候補6名）。パーサが1行も読めず停止。parse_senkan_pdf.py を両形式対応に修正済み。(2) 仮に読めても、このレース定義の候補者（玉城・古謝・下地）は実際の出馬者（古謝・カネシマ・すえよし・玉城・ヒガ・屋良）と一致せず、resolveColumns が拒否して止まっていた。下地氏は出馬していない。告示後に候補者を更新しなかった。どちらの層でも誤データは入らず安全側に止まったが、速報は出せなかった。また cron は5分おきに72回発火する想定だったが、実際に動いたのは2回だけだった（GitHub Actions の schedule はベストエフォート）。確定結果は data/results/okinawa2026.json に市町村別で保存。2030年の基準線になる。"
 }

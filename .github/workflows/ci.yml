@@ -43,8 +43,17 @@ jobs:
           fi
           echo "一致しました"
 
-      - name: 選管PDFパーサが公表値を再現すること
+      # 選管PDFは年ごとに書式が変わる。2022年版だけで検証していたため、
+      # 2026年の開票当夜に形式変更（TJ配列・数字のリテラル化・6候補）で
+      # 1行も読めずに止まった。両方の書式を固定して回帰を防ぐ。
+      - name: 選管PDFパーサが公表値を再現すること（2022年版）
         run: |
           python3 tools/parse_senkan_pdf.py tools/fixtures/okinawa2022-kaihyo-kakutei.pdf \
             --candidates 下地ミキオ 佐喜真淳 玉城デニー \
             --expect 53677 274844 339767 --max-seq 41 > /dev/null
+
+      - name: 選管PDFパーサが公表値を再現すること（2026年版）
+        run: |
+          python3 tools/parse_senkan_pdf.py tools/fixtures/okinawa2026-kaihyo-kakutei-teisei.pdf \
+            --candidates 古謝げんた カネシマシュン すえよしまさひろ 玉城デニー ヒガタカシ 屋良朝助 \
+            --expect 423124 4657 2270 276060 3542 2467 --max-seq 41 > /dev/null

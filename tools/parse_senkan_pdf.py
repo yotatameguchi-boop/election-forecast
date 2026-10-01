@@ -57,21 +57,56 @@ def build_cmap(streams):
     return cmap
 
 
+# テキスト表示演算子。選管のPDFは年や作成環境で形式が変わる:
+#   2022年版 … <hex> Tj             （単一文字列）
+#   2026年版 … [<hex>-32<hex>...] TJ（配列。間の数値はカーニング）
+# どちらも扱えないと、CMap が読めていても抽出0件になる。
+# （実際に2026年版で「市町村行を1件も抽出できませんでした」で失敗した）
+_TOKEN = re.compile(
+    r"\[([^\]]*)\]\s*TJ"                  # 1: TJ の配列本体
+    r"|<([0-9A-Fa-f]+)>\s*Tj"             # 2: 単一 Tj
+    r"|[\d.\-]+\s+([\d.\-]+)\s+Tm"        # 3: Tm の y 座標（行の区切りに使う）
+)
+# 配列の中身は 16進文字列と「リテラル文字列」が混在する。
+#   <0F82>        … 埋め込みフォントのグリフ番号。ToUnicode で引く
+#   (86,336.000)  … そのまま表示される文字列
+# ★2026年版は得票数をリテラルで入れていた。16進しか見ていなかったため
+#   市町村名だけ読めて数字が全部落ち、「1件も抽出できません」になった。
+_PIECE = re.compile(r"<([0-9A-Fa-f]+)>|\(((?:[^()\\]|\\.)*)\)")
+_UNESCAPE = re.compile(r"\\(.)")
+
+
+def _cids_to_text(hexstr, cmap):
+    return "".join(cmap.get(int(hexstr[i:i + 4], 16), "")
+                   for i in range(0, len(hexstr) - len(hexstr) % 4, 4))
+
+
+def _array_to_text(body, cmap):
+    out = []
+    for mm in _PIECE.finditer(body):
+        if mm.group(1) is not None:
+            out.append(_cids_to_text(mm.group(1), cmap))
+        else:
+            out.append(_UNESCAPE.sub(r"\1", mm.group(2)))
+    return "".join(out)
+
+
 def decode_text(streams, cmap):
     """内容ストリームのテキスト演算子を復号し、行に組み直す。"""
     lines, cur, cur_y = [], [], None
     for blob in streams.values():
-        if b"BT" not in blob or b"Tj" not in blob:
+        if b"BT" not in blob:
+            continue
+        if b"Tj" not in blob and b"TJ" not in blob:
             continue
         content = blob.decode("latin1")
-        for tok in re.finditer(
-                r"<([0-9A-Fa-f]+)>\s*Tj|[\d.\-]+\s+([\d.\-]+)\s+Tm", content):
-            if tok.group(1):
-                h = tok.group(1)
-                cur.append("".join(
-                    cmap.get(int(h[i:i + 4], 16), "") for i in range(0, len(h), 4)))
-            elif tok.group(2) is not None:
-                y = float(tok.group(2))
+        for tok in _TOKEN.finditer(content):
+            if tok.group(1) is not None:                      # TJ 配列
+                cur.append(_array_to_text(tok.group(1), cmap))
+            elif tok.group(2) is not None:                    # 単一 Tj
+                cur.append(_cids_to_text(tok.group(2), cmap))
+            elif tok.group(3) is not None:                    # Tm
+                y = float(tok.group(3))
                 if cur_y is None or abs(y - cur_y) > 2:
                     if cur:
                         lines.append("".join(cur))

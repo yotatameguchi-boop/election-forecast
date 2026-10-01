@@ -900,7 +900,7 @@ function scoreStrategy(history, pick){
    fieldConfirmed … 告示済みで候補者名簿が確定しているか
    polls[]        … 情勢調査。shares(数値) または lean(定性) を持つ
 ========================================================= */
-const LAST_UPDATED = "2026-08-09";   // 長野県知事選の確定開票結果を反映
+const LAST_UPDATED = "2026-10-02";   // 沖縄県知事選の確定開票結果（9/16訂正版）を反映
 
 const RACES = [
   {
@@ -923,13 +923,23 @@ const RACES = [
     ],
   },
   {
-    id:"okinawa2026", name:"沖縄県知事選", date:"2026-09-13", status:"pending",
-    type:"三つ巴", fieldConfirmed:false, assumedTotalVotes:668367,
-    source:"琉球新報(直近知事選 確定開票結果)",
+    id:"okinawa2026", name:"沖縄県知事選", date:"2026-09-13", status:"decided",
+    type:"三つ巴",
+    source:"沖縄県選挙管理委員会「開票確定(知事選)」2026/9/16訂正版。日本経済新聞・沖縄タイムスの報道と一致",
+    note:"大外し。8/13に凍結した予測は玉城氏の勝率75.5%だったが、古謝氏が59.42%で圧勝した。古謝氏の得票率は90%区間（28.6–48.9%）の外で、Brier は 0.570（コイン投げの0.250より悪い）。" +
+         "候補者名簿も外した。予測は玉城・古謝・下地の三つ巴を想定していたが、下地氏は出馬せず、代わりに新人4人が出た。告示前の想定を告示後に更新しなかったためで、京都で第3候補を見落としたのと同じ種類の失敗の再発。" +
+         "投票総数も外した。素の想定668,367票に対し実際の有効投票は712,120票（素の想定は−6.1%）だったが、過去の過大バイアス補正を掛けて591,916票としたため誤差が−16.9%に拡大した。補正が裏目に出たのは長野に続き2戦連続。" +
+         "開票当夜の自動取り込みも失敗した。速報PDFの形式が2022年版から変わっており（TJ配列・数字のリテラル文字列化・6候補）、パーサが1行も読めずに止まった。誤った数字は入らなかったが、速報は出せなかった。",
+    fieldConfirmed:false,
+    predTotal:668367, actTotal:712120,
+    projectedTotal:591916,
+    winProb:0.755, winProbOn:"玉城デニー",
     candidates:[
-      {name:"玉城デニー", tag:"現職・3選目",         center:49.4, incumbent:true},
-      {name:"古謝玄太",   tag:"新人・前那覇市副市長", center:42.1, incumbent:false},
-      {name:"下地幹郎",   tag:"新人・元衆院議員",     center: 8.5, incumbent:false},
+      {name:"古謝玄太",   tag:"新人・前那覇市副市長", predicted:39.1, predictedVotes:231163, actual:59.42, actualVotes:423124, winner:true,  incumbent:false},
+      {name:"玉城デニー", tag:"現職",                 predicted:46.0, predictedVotes:272206, actual:38.77, actualVotes:276060, winner:false, incumbent:true},
+      // 予測では8.0%を割り当てたが出馬しなかった。得票は存在しないので actual は null。
+      {name:"下地幹郎",   tag:"予測に含めたが不出馬",  predicted:8.0,  predictedVotes:47137,  actual:null,  actualVotes:null,   winner:false, incumbent:false, withdrew:true},
+      {name:"(他4候補)", tag:"カネシマ・ヒガ・屋良・すえよし（予測対象外）", predicted:null, predictedVotes:null, actual:1.82, actualVotes:12936, winner:false, incumbent:false, derived:true},
     ],
   },
   {
