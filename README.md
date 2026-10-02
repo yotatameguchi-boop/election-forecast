@@ -4,6 +4,10 @@
 
 個人的な検証プロジェクトであり、公式な選挙予測ではありません。
 
+**サイト: https://election-forecast-kappa.vercel.app**
+
+（GitHub Pages にも同じものを配信しています: https://yotatameguchi-boop.github.io/election-forecast/ ）
+
 ---
 
 ## 何をするものか

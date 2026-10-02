@@ -1,0 +1,7 @@
+# Vercel には公開ページとして必要なものだけ載せる。
+# ページは index.html 単体で動き、開票速報のときだけ live/<raceId>.json を読む。
+# モデルのソース・選管PDF・テストなどは GitHub に公開済みなので配信は不要。
+/*
+!index.html
+!live
+!vercel.json
